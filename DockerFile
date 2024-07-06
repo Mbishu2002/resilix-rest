@@ -10,7 +10,7 @@ ARG COUNTRY_CODE
 ARG TWILIO_PHONE_NUMBER
 ARG FCM_SERVER_KEY
 
-# Set environment variables that will persist in the final image
+# Set environment variables
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV OPENAI_API_KEY=${OPENAI_API_KEY}
@@ -24,7 +24,7 @@ ENV FCM_SERVER_KEY=${FCM_SERVER_KEY}
 # Set the working directory in the container
 WORKDIR /app
 
-# Copy requirements.txt to the working directory
+
 COPY requirements.txt .
 
 # Install Python dependencies
@@ -35,5 +35,5 @@ COPY . /app/
 
 EXPOSE 8000
 
-# Run collectstatic, migrate, and start the server
+# Run collectstatic, makemigrations,migrate, and start the server
 CMD ["sh", "-c", "python manage.py collectstatic --noinput&& python manage.py makemigrations && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"]
