@@ -1,0 +1,17 @@
+# Ignore development and environment files
+.env
+*.pyc
+
+# Ignore Django-specific files
+*.log
+db.sqlite3
+media/
+static/
+
+# Ignore Docker-related files
+Dockerfile
+docker-compose.yml
+
+# Ignore version control files
+.git
+.gitignore
