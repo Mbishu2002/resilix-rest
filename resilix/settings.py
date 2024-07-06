@@ -25,7 +25,7 @@ SECRET_KEY = "django-insecure-*ej+a@++ed=o#^jb$-%urpqus5xbgzd*gr80kka@az59g36*oj
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-#ALLOWED_HOSTS = ["resilixapi.pythonanywhere.com"]
+ALLOWED_HOSTS = ["resilix.onrender.com"]
 
 
 # Application definition
@@ -50,6 +50,7 @@ INSTALLED_APPS = [
 # Google api key : AIzaSyB-qnuASwVQSvcWwdXdCyLNWO7-uu1ATVE
 
 AUTH_USER_MODEL = "main.CustomUser"
+
 
 
 CHANNEL_LAYERS = {
