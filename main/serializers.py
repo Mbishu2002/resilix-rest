@@ -1,6 +1,6 @@
 # serializers.py
 from rest_framework import serializers
-from .models import Alert, DisasterFeedback, Location, CustomUser, Profile, AlertChoices
+from .models import Alert, DisasterFeedback, Location, CustomUser, AlertChoices
 from rest_framework.validators import ValidationError
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
