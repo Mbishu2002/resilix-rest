@@ -34,7 +34,7 @@ jobs:
           docker build \
             --build-arg OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} \
             --build-arg ACCOUNT_SID=${{ secrets.ACCOUNT_SID }} \
-            --build-arg TWILLO_AUTH_TOKEN=${{ secrets.TWILLO_AUTH_TOKEN }} \
+            --build-arg TWILIO_AUTH_TOKEN=${{ secrets.TWILIO_AUTH_TOKEN }} \
             --build-arg COUNTRY_CODE=${{ secrets.COUNTRY_CODE }} \
             --build-arg TWILIO_PHONE_NUMBER=${{ secrets.TWILIO_PHONE_NUMBER }} \
             --build-arg FCM_SERVER_KEY=${{ secrets.FCM_SERVER_KEY }} \

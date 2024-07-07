@@ -23,6 +23,10 @@ from .serializers import (
     ChatMessageSerializer,
 )
 from .models import Alert, DisasterFeedback, Location, AlertChoices, CustomUser
+import openai
+from rest_framework.authtoken.models import Token
+
+openai.api_key = settings.OPENAI_API_KEY
 
 def fetch_service_account_file(url):
     response = requests.get(url)
@@ -194,13 +198,13 @@ class AlertListCreateView(generics.ListCreateAPIView):
         return alert_instance
 
 class ChatbotAPIView(APIView):
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         serializer = ChatMessageSerializer(data=request.data)
         if serializer.is_valid():
             user_message = serializer.validated_data['message']
             try:
                 response = openai.Completion.create(
-                    engine="text-davinci-003",
+                    engine="gpt-3.5-turbo",
                     prompt=user_message,
                     max_tokens=150
                 )
