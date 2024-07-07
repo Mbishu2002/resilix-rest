@@ -25,7 +25,7 @@ SECRET_KEY = "django-insecure-*ej+a@++ed=o#^jb$-%urpqus5xbgzd*gr80kka@az59g36*oj
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["resilix.onrender.com"]
+ALLOWED_HOSTS = ["resilix.onrender.com", "127.0.0.1"]
 
 
 # Application definition
@@ -160,9 +160,12 @@ import os
 load_dotenv()
 
 # Accessing variables
-openai_api_key = os.getenv("OPENAI_API_KEY")
-twilio_account_sid = os.getenv("ACCOUNT_SID")
-twilio_auth_token = os.getenv("TWILLO_AUTH_TOKEN")
-country_code = os.getenv("COUNTRY_CODE")
-twilio_phone_number = os.getenv("TWILIO_PHONE_NUMBER")
-fcm_server_key = os.getenv("FCM_SERVER_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
+TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
+COUNTRY_CODE = os.getenv("COUNTRY_CODE")
+TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
+FCM_SERVER_KEY = os.getenv("FCM_SERVER_KEY")
+
+
+FCM_SERVICE_ACCOUNT_URL = 'https://pub-f7a72219e0eb4c759086aa8a4e6bf726.r2.dev/resilix-6611b-firebase-adminsdk-djxzd-7777a6512c.json'

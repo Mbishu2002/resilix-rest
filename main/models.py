@@ -9,7 +9,7 @@ import pyotp
 class CustomUser(AbstractUser):
     fcm_token = models.CharField(max_length=255, blank=True, null=True)
     phone_number = models.CharField(max_length=15, blank=True, null=True)
-    notify_via_sms = models.BooleanField(default=False)
+    notify_via_sms = models.BooleanField(default=True)
     otp = models.CharField(max_length=100, null=True, blank=True, unique=True)
 
     # validate opt

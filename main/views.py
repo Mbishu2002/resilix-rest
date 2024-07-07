@@ -1,64 +1,84 @@
+import os
+import json
+import requests
+from pyfcm import FCMNotification
+from django.conf import settings
+from twilio.rest import Client
+import pyotp
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
-import json
-import openai
-
-
+from rest_framework import status, generics
+from rest_framework.decorators import authentication_classes
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 from .serializers import (
     AlertSerializer,
     DisasterFeedbackSerializer,
-    LoacationSerializer,
+    LocationSerializer,
     UserRegistrationSerializer,
     UserLoginSerializer,
     AlertChoicesSerializer,
+    ChatMessageSerializer,
 )
-
 from .models import Alert, DisasterFeedback, Location, AlertChoices, CustomUser
-from django.conf import settings
-from django.views import View
-from django.http import JsonResponse
-from rest_framework import generics
-import pyotp
-from twilio.rest import Client
-from rest_framework.decorators import authentication_classes, api_view
-from rest_framework.authentication import TokenAuthentication
-from rest_framework.request import Request
-from rest_framework.authtoken.models import Token
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework import permissions
-from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync
-from .utils import *
 
+def fetch_service_account_file(url):
+    response = requests.get(url)
+    response.raise_for_status()  
+    return response.json()
 
+def initialize_fcm():
+    service_account_url = settings.FCM_SERVICE_ACCOUNT_URL  
+    service_account_info = fetch_service_account_file(service_account_url)
+    project_id = service_account_info.get("project_id")
+    return FCMNotification(service_account_file=None, credentials=service_account_info, project_id=project_id)
 
-# sending sms
-def send_sms_code(user):
-    time_otp = pyotp.TOTP(user.otp, interval=300)
-    time_otp = time_otp.now()
-    user_phone_number = user.phone_number
+fcm = initialize_fcm()
+def send_push_notification(registration_ids, message_title, message_body):
+    if registration_ids:
+        result = fcm.notify_multiple_devices(
+            registration_ids=registration_ids,
+            message_title=message_title,
+            message_body=message_body
+        )
+        return result
+    return None
 
-    client = Client(settings.twilio_account_sid, settings.twilio_auth_token)
+def send_sms_notification(phone_number, message):
+    client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
     client.messages.create(
-        body="Your verification code is " + time_otp,
-        from_=settings.twilio_phone_number,
-        to=user_phone_number,
+        body=message,
+        from_=settings.TWILIO_PHONE_NUMBER,
+        to=phone_number,
     )
 
+def send_notifications(user, message_title, message_body):
+    fcm_token = user.fcm_token
+    phone_number = user.phone_number
+    
+    if fcm_token:
+        send_push_notification([fcm_token], message_title, message_body)
+    else:
+        if phone_number:
+            send_sms_notification(phone_number, message_body)
+
+def send_sms_code(user):
+    time_otp = pyotp.TOTP(user.otp, interval=300)
+    otp_code = time_otp.now()
+    user_phone_number = user.phone_number
+
+    send_sms_notification(user_phone_number, "Your verification code is " + otp_code)
 
 def verify_phone(user, sms_code):
     code = int(sms_code)
     if user.authenticate(code):
-        user.phone.verified = True
-        user.phone.save()
+        user.phone_number_verified = True
+        user.save()
         return True
     return False
 
-
-# registration logic
-# Endpoint for registring users
 class UserRegistration(generics.GenericAPIView):
     serializer_class = UserRegistrationSerializer
 
@@ -68,11 +88,10 @@ class UserRegistration(generics.GenericAPIView):
 
         if serializer.is_valid():
             user = serializer.save()
-
-            # Send SMS code
+            send_notifications(user, "Welcome!", "Thanks for registering with our app.")
             send_sms_code(user)
             sms_code = data.get("sms_code")
-            # Verify the phone number
+            
             if verify_phone(user, sms_code):
                 response = {
                     "message": "User Created Successfully",
@@ -82,36 +101,27 @@ class UserRegistration(generics.GenericAPIView):
 
         return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-@authentication_classes([TokenAuthentication])  # Include token authentication
+@authentication_classes([TokenAuthentication])
 class UserLogin(APIView):
-    def post(self, request: Request):
+    def post(self, request):
         serializer = UserLoginSerializer(data=request.data)
-        username = request.data.get("username")
         if serializer.is_valid():
             user = serializer.validated_data.get("user")
             if user:
                 token, created = Token.objects.get_or_create(user=user)
-                print(token)
-                return Response({"token": token.key, "username": username}, status=status.HTTP_200_OK)
-        return Response(
-            {"detail": "Authentication failed."}, status=status.HTTP_401_UNAUTHORIZED
-        )
+                return Response({"token": token.key, "username": user.username}, status=status.HTTP_200_OK)
+        return Response({"detail": "Authentication failed."}, status=status.HTTP_401_UNAUTHORIZED)
 
-    def get(self, request: Request):
+    def get(self, request):
         content = {"user": str(request.user), "auth": str(request.auth)}
-
         return Response(data=content, status=status.HTTP_200_OK)
 
-
 class ListDisasterFeedback(APIView):
-    # getting disaster feedbacks
     def get(self, request):
         disaster_feedback = DisasterFeedback.objects.all()
         serializer = DisasterFeedbackSerializer(disaster_feedback, many=True)
         return Response(serializer.data)
 
-    # creating disaster feedbacks
     def post(self, request):
         serializer = DisasterFeedbackSerializer(data=request.data)
         if serializer.is_valid():
@@ -119,32 +129,25 @@ class ListDisasterFeedback(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
 class ListLocations(APIView):
-    # getting disaster feedbacks
     def get(self, request):
         locations = Location.objects.all()
-        serializer = LoacationSerializer(locations, many=True)
+        serializer = LocationSerializer(locations, many=True)
         return Response(serializer.data)
 
-    # creating disaster feedbacks
     def post(self, request):
-        serializer = LoacationSerializer(data=request.data)
+        serializer = LocationSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-# Homepage Api endpoint
 class EmergencyAlertChoicesView(APIView):
-    # getting emergency alert choices
     def get(self, request):
         emergency_choices = AlertChoices.objects.all()
         serializer = AlertChoicesSerializer(emergency_choices, many=True)
         return Response(serializer.data)
 
-    # creating emergency  choices
     def post(self, request):
         serializer = AlertChoicesSerializer(data=request.data)
         if serializer.is_valid():
@@ -152,36 +155,26 @@ class EmergencyAlertChoicesView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-
-
 class AlertListCreateView(generics.ListCreateAPIView):
     queryset = Alert.objects.all()
     serializer_class = AlertSerializer
 
     def perform_create(self, serializer):
-        # Extract user's location from the request data
         user_location_data = self.request.data.get("user_location", None)
 
-        # Validate and save the location if available
         if user_location_data:
-            location_serializer = LoacationSerializer(data=user_location_data)
+            location_serializer = LocationSerializer(data=user_location_data)
             if location_serializer.is_valid():
                 location_instance = location_serializer.save()
                 serializer.validated_data["location"] = location_instance
 
-        # Save the alert instance
         alert_instance = serializer.save()
-
-        # Use OpenAI to generate first aid response
         alert_description = alert_instance.description
         first_aid_response = serializer.get_first_aid_response(alert_description)
 
-        # Update the alert instance with the first aid response
         alert_instance.first_aid_response = first_aid_response
         alert_instance.save()
 
-        # Broadcast the alert
         if self.request.data.get("broadcast_to_all", False):
             channel_layer = get_channel_layer()
             async_to_sync(channel_layer.group_send)(
@@ -192,28 +185,27 @@ class AlertListCreateView(generics.ListCreateAPIView):
                 }
             )
 
-            # Send notifications to all users
             users = CustomUser.objects.all()
             for user in users:
                 message_title = "New Alert"
                 message_body = alert_instance.description
-
-                if user.fcm_token:
-                    send_push_notification(
-                        [user.fcm_token],
-                        message_title=message_title,
-                        message_body=message_body
-                    )
-
-
-                if user.phone_number:
-                    send_sms_notification(
-                        user.phone_number,
-                        message_body
-                    )
+                send_notifications(user, message_title, message_body)
 
         return alert_instance
 
-    
-
-    
+class ChatbotAPIView(APIView):
+    def post(self, request):
+        serializer = ChatMessageSerializer(data=request.data)
+        if serializer.is_valid():
+            user_message = serializer.validated_data['message']
+            try:
+                response = openai.Completion.create(
+                    engine="text-davinci-003",
+                    prompt=user_message,
+                    max_tokens=150
+                )
+                bot_response = response.choices[0].text.strip()
+                return Response({'response': bot_response}, status=status.HTTP_200_OK)
+            except Exception as e:
+                return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

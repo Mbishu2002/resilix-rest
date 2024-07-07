@@ -8,6 +8,7 @@ from .views import (
     UserRegistration,
     UserLogin,
     AlertListCreateView,
+    ChatbotAPIView
 )
 
 urlpatterns = [
@@ -29,4 +30,5 @@ urlpatterns = [
     path("Alerts/", AlertListCreateView.as_view()),
     path("send_sms_code/", send_sms_code),
     path("verify_phone/<int:sms_code>", verify_phone),
+    path('chatbot/', ChatbotAPIView.as_view(), name='chatbot-api')
 ]
