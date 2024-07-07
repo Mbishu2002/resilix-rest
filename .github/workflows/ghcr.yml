@@ -32,7 +32,7 @@ jobs:
         id: build-image
         run: |
           docker build \
-            --build-arg OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} \
+            --build-arg GOOOGLE_API_KEY=${{ secrets.GOOOGLE_API_KEY }} \
             --build-arg ACCOUNT_SID=${{ secrets.ACCOUNT_SID }} \
             --build-arg TWILIO_AUTH_TOKEN=${{ secrets.TWILIO_AUTH_TOKEN }} \
             --build-arg COUNTRY_CODE=${{ secrets.COUNTRY_CODE }} \
