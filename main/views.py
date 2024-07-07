@@ -107,7 +107,9 @@ class VerifyPhoneView(APIView):
     def post(self, request):
         phone_number = request.data.get('phone_number')
         otp_code = request.data.get('otp_code')
-        
+
+        print(f"phone_number: {phone_number}, otp_code: {otp_code}")
+
         if not phone_number or not otp_code:
             return Response(
                 {"detail": "Phone number and OTP code are required."},

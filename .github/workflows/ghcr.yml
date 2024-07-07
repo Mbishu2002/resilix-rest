@@ -34,6 +34,7 @@ jobs:
           docker build \
             --build-arg GOOOGLE_API_KEY=${{ secrets.GOOOGLE_API_KEY }} \
             --build-arg ACCOUNT_SID=${{ secrets.ACCOUNT_SID }} \
+            --build-arg REDIS_URL=${{ secrets.REDIS_URL }} \
             --build-arg TWILIO_AUTH_TOKEN=${{ secrets.TWILIO_AUTH_TOKEN }} \
             --build-arg COUNTRY_CODE=${{ secrets.COUNTRY_CODE }} \
             --build-arg TWILIO_PHONE_NUMBER=${{ secrets.TWILIO_PHONE_NUMBER }} \

@@ -19,13 +19,13 @@ from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
 import main.routing
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'your_project_name.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'resilix.settings')
 
 application = ProtocolTypeRouter({
     "http": get_asgi_application(),
     "websocket": AuthMiddlewareStack(
         URLRouter(
-            your_app_name.routing.websocket_urlpatterns
+            main.routing.websocket_urlpatterns
         )
     ),
 })

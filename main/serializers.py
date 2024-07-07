@@ -62,7 +62,7 @@ class LocationSerializer(serializers.ModelSerializer):
 class AlertChoicesSerializer(serializers.ModelSerializer):
     class Meta:
         model = AlertChoices
-        fields = ["emergency_name"]
+        fields = ["id", "emergency_name"]
 
 CustomUser = get_user_model()
 
