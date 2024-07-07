@@ -160,7 +160,7 @@ import os
 load_dotenv()
 
 # Accessing variables
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 TWILIO_ACCOUNT_SID = os.getenv("ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
 COUNTRY_CODE = os.getenv("COUNTRY_CODE")

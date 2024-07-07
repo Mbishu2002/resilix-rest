@@ -8,7 +8,7 @@ import pyotp
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, generics
-from rest_framework.decorators import authentication_classes
+from rest_framework.decorators import authentication_classes, permission_classes
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from channels.layers import get_channel_layer
@@ -23,10 +23,12 @@ from .serializers import (
     ChatMessageSerializer,
 )
 from .models import Alert, DisasterFeedback, Location, AlertChoices, CustomUser
-import openai
 from rest_framework.authtoken.models import Token
+from .serializers import ChatMessageSerializer
+import google.generativeai as genai
+from django.conf import settings
 
-openai.api_key = settings.OPENAI_API_KEY
+genai.configure(api_key=settings.GOOGLE_API_KEY)
 
 def fetch_service_account_file(url):
     response = requests.get(url)
@@ -40,6 +42,7 @@ def initialize_fcm():
     return FCMNotification(service_account_file=None, credentials=service_account_info, project_id=project_id)
 
 fcm = initialize_fcm()
+
 def send_push_notification(registration_ids, message_title, message_body):
     if registration_ids:
         result = fcm.notify_multiple_devices(
@@ -94,16 +97,41 @@ class UserRegistration(generics.GenericAPIView):
             user = serializer.save()
             send_notifications(user, "Welcome!", "Thanks for registering with our app.")
             send_sms_code(user)
-            sms_code = data.get("sms_code")
-            
-            if verify_phone(user, sms_code):
-                response = {
-                    "message": "User Created Successfully",
-                    "data": serializer.data,
-                }
-                return Response(data=response, status=status.HTTP_201_CREATED)
+            return Response({
+                "message": "Registration successful. Please verify your account using the OTP sent to your phone number."
+            }, status=status.HTTP_201_CREATED)
 
-        return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class VerifyPhoneView(APIView):
+    def post(self, request):
+        phone_number = request.data.get('phone_number')
+        otp_code = request.data.get('otp_code')
+        
+        if not phone_number or not otp_code:
+            return Response(
+                {"detail": "Phone number and OTP code are required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            user = CustomUser.objects.get(phone_number=phone_number)
+        except CustomUser.DoesNotExist:
+            return Response(
+                {"detail": "User with this phone number does not exist."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        if verify_phone(user, otp_code):
+            return Response(
+                {"message": "Phone number verified successfully."},
+                status=status.HTTP_200_OK
+            )
+        else:
+            return Response(
+                {"detail": "Invalid OTP code."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 @authentication_classes([TokenAuthentication])
 class UserLogin(APIView):
@@ -197,19 +225,20 @@ class AlertListCreateView(generics.ListCreateAPIView):
 
         return alert_instance
 
+
 class ChatbotAPIView(APIView):
     def post(self, request, *args, **kwargs):
         serializer = ChatMessageSerializer(data=request.data)
         if serializer.is_valid():
             user_message = serializer.validated_data['message']
             try:
-                response = openai.Completion.create(
-                    engine="gpt-3.5-turbo",
-                    prompt=user_message,
-                    max_tokens=150
-                )
-                bot_response = response.choices[0].text.strip()
+                model = genai.GenerativeModel('gemini-1.5-pro')
+                prompt = f"User: {user_message}\nBot:"
+
+                response = model.generate_content(prompt)
+                bot_response = response.generations[0].text.strip()
                 return Response({'response': bot_response}, status=status.HTTP_200_OK)
             except Exception as e:
                 return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+

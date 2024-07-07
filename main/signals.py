@@ -1,6 +1,9 @@
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
-from .models import CustomUser  # This is your custom user model
+from .models import CustomUser  
+from django.db.models.signals import post_migrate
+from django.dispatch import receiver
+from .models import AlertChoices
 import pyotp
 
 
@@ -25,3 +28,17 @@ def create_key(sender, instance, **kwargs):
     """This creates the key for users that don't have keys"""
     if not instance.otp:
         instance.otp = generate_otp()
+
+
+@receiver(post_migrate)
+def create_default_alert_choices(sender, **kwargs):
+    if sender.name == 'main': 
+        default_choices = [
+            "Fire",
+            "Flood",
+            "Earthquake",
+            "Tornado",
+            "Medical Emergency"
+        ]
+        for choice in default_choices:
+            AlertChoices.objects.get_or_create(emergency_name=choice)

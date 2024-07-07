@@ -5,27 +5,46 @@ from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate, get_user_model
 import openai
 from django.conf import settings
+import google.generativeai as genai
+import markdown
+import textwrap
+
+genai.configure(api_key=settings.GOOGLE_API_KEY)
+
+def to_markdown(text):
+    text = text.replace('•', '  *')
+    return markdown.markdown(textwrap.indent(text, '> ', predicate=lambda _: True))
 
 class AlertSerializer(serializers.ModelSerializer):
+    first_aid_response = serializers.SerializerMethodField()
+
     class Meta:
         model = Alert
-        fields = ["alert_type", "description", "location"]
+        fields = ["alert_type", "description", "location", "first_aid_response"]
 
-    def get_first_aid_response(self, alert_description):
-        openai.api_key = settings.OPENAI_API_KEY
+    def get_first_aid_response(self, obj):
+        """Provides first aid guidance based on the alert description using a generative model.
+
+        Args:
+            obj: The Alert object.
+
+        Returns:
+            A string containing the first aid response in markdown format (if successful).
+        """
+
+        model = genai.GenerativeModel('gemini-1.5-pro')
         prompt = (
-            f"Given the following emergency alert: {alert_description}, "
+            f"Given the following emergency alert: {obj.description}, "
             "You are well-versed in first aid measures for emergencies in Cameroon. "
             "Provide immediate and clear first aid measures. Offer concise and effective first aid guidance."
         )
 
-        response = openai.Completion.create(
-            engine="text-davinci-003",
-            prompt=prompt,
-            max_tokens=150,
-        )
-
-        return response.choices[0].text.strip()
+        try:
+            response = model.generate_content(prompt)
+            return to_markdown(response.generations[0].text)
+        except Exception as e:
+            print(f"Error generating response: {e}")
+            return "An error occurred while retrieving first aid guidance. Please call emergency services."
 
 class DisasterFeedbackSerializer(serializers.ModelSerializer):
     class Meta:
