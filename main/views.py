@@ -201,7 +201,6 @@ class AlertListCreateView(generics.ListCreateAPIView):
     serializer_class = AlertSerializer
 
     def perform_create(self, serializer):
-        user = self.request.user
         user_location_data = self.request.data.get("user_location", None)
 
         if user_location_data:
@@ -210,7 +209,6 @@ class AlertListCreateView(generics.ListCreateAPIView):
                 location_instance = location_serializer.save()
                 serializer.validated_data["location"] = location_instance
 
-        serializer.validated_data["user"] = user
         alert_instance = serializer.save()
         alert_description = alert_instance.description
         first_aid_response = serializer.get_first_aid_response(alert_description)

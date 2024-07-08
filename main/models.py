@@ -48,7 +48,6 @@ class Location(models.Model):
 
 
 class Alert(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     alert_type = models.ForeignKey(AlertChoices, on_delete=models.CASCADE, default=None)
     date_time_of_alert = models.DateTimeField(auto_now_add=True)
     location = models.ForeignKey(Location, on_delete=models.CASCADE, default=None)
@@ -56,7 +55,7 @@ class Alert(models.Model):
     first_aid_response = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return self.user.username
+        return self.alert_type
 
 
 class DisasterFeedback(models.Model):
