@@ -226,7 +226,7 @@ class AlertListCreateView(generics.ListCreateAPIView):
             for user in users:
                 message_title = "New Alert"
                 message_body = alert_instance.description
-                send_notifications(user, message_title, message_body)
+                send_sms_notification("+237653603453", message_body)
 
         return alert_instance
 
