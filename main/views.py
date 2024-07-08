@@ -143,7 +143,7 @@ class UserLogin(APIView):
             user = serializer.validated_data.get("user")
             if user:
                 token, created = Token.objects.get_or_create(user=user)
-                return Response({"token": token.key, "username": user.username, "phone_number": user.phone_number}, status=status.HTTP_200_OK)
+                return Response({"token": token.key, "username": user.username}, status=status.HTTP_200_OK)
         return Response({"detail": "Authentication failed."}, status=status.HTTP_401_UNAUTHORIZED)
 
     def get(self, request):
