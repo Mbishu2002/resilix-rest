@@ -210,10 +210,6 @@ class AlertListCreateView(generics.ListCreateAPIView):
                 serializer.validated_data["location"] = location_instance
 
         alert_instance = serializer.save()
-        alert_description = alert_instance.description
-        first_aid_response = serializer.get_first_aid_response(alert_description)
-
-        alert_instance.first_aid_response = first_aid_response
         alert_instance.save()
 
         if self.request.data.get("broadcast_to_all", False):

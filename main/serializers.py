@@ -34,7 +34,7 @@ class AlertSerializer(serializers.ModelSerializer):
 
         model = genai.GenerativeModel('gemini-1.0-pro')
         prompt = (
-            f"Given the following emergency alert: {obj.description}, "
+            f"Given the following emergency alert: {obj}, "
             "You are well-versed in first aid measures for emergencies in Cameroon. "
             "Provide immediate and clear first aid measures. Offer concise and effective first aid guidance."
         )
