@@ -55,7 +55,7 @@ class Alert(models.Model):
     first_aid_response = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return self.alert_type
+        return self.description
 
 
 class DisasterFeedback(models.Model):
