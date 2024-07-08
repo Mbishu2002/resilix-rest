@@ -20,7 +20,7 @@ class AlertSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Alert
-        fields = ["user","alert_type", "description", "location", "first_aid_response"]
+        fields = ["alert_type", "description", "location", "first_aid_response"]
 
     def get_first_aid_response(self, obj):
         """Provides first aid guidance based on the alert description using a generative model.
