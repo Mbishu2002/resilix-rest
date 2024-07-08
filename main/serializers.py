@@ -41,7 +41,7 @@ class AlertSerializer(serializers.ModelSerializer):
 
         try:
             response = model.generate_content(prompt)
-            return to_markdown(response.generations[0].text)
+            return to_markdown(response.text)
         except Exception as e:
             print(f"Error generating response: {e}")
             return "An error occurred while retrieving first aid guidance. Please call emergency services."

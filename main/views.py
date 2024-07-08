@@ -189,7 +189,6 @@ class EmergencyAlertChoicesView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
 class AlertListCreateView(generics.ListCreateAPIView):
     queryset = Alert.objects.all()
     serializer_class = AlertSerializer
@@ -240,7 +239,7 @@ class ChatbotAPIView(APIView):
                 prompt = f"User: {user_message}\nBot:"
 
                 response = model.generate_content(prompt)
-                bot_response = response.generations[0].text.strip()
+                bot_response = response.text
                 return Response({'response': bot_response}, status=status.HTTP_200_OK)
             except Exception as e:
                 return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
