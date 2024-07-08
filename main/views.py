@@ -96,13 +96,21 @@ class UserRegistration(generics.GenericAPIView):
         if serializer.is_valid():
             user = serializer.save()
             send_notifications(user, "Welcome!", "Thanks for registering with our app.")
-            send_sms_code(user)
+            
+            try:
+                send_sms_code(user)
+            except Exception as e:
+                # Log the error message if needed
+                # logger.error(f"Failed to send SMS: {e}")
+                return Response({
+                    "message": "Registration successful, but failed to send SMS. Please verify your account manually."
+                }, status=status.HTTP_201_CREATED)
+                
             return Response({
                 "message": "Registration successful. Please verify your account using the OTP sent to your phone number."
             }, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 class VerifyPhoneView(APIView):
     def post(self, request):
         phone_number = request.data.get('phone_number')
