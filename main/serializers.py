@@ -20,7 +20,7 @@ class AlertSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Alert
-        fields = ["alert_type", "description", "location", "first_aid_response"]
+        fields = ["user","alert_type", "description", "location", "first_aid_response"]
 
     def get_first_aid_response(self, obj):
         """Provides first aid guidance based on the alert description using a generative model.
@@ -41,7 +41,7 @@ class AlertSerializer(serializers.ModelSerializer):
 
         try:
             response = model.generate_content(prompt)
-            return to_markdown(response.text)
+            return response.text
         except Exception as e:
             print(f"Error generating response: {e}")
             return "An error occurred while retrieving first aid guidance. Please call emergency services."
