@@ -196,7 +196,6 @@ class EmergencyAlertChoicesView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@authentication_classes([TokenAuthentication])
 class AlertListCreateView(generics.ListCreateAPIView):
     queryset = Alert.objects.all()
     serializer_class = AlertSerializer
@@ -224,7 +223,7 @@ class AlertListCreateView(generics.ListCreateAPIView):
             async_to_sync(channel_layer.group_send)(
                 "alerts",
                 {
-                    "type": "alert_message",
+                    "type": "alert",
                     "message": f"New alert: {alert_instance.description}"
                 }
             )
