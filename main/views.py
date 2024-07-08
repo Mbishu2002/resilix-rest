@@ -135,7 +135,6 @@ class VerifyPhoneView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-@authentication_classes([TokenAuthentication])
 class UserLogin(APIView):
     def post(self, request):
         serializer = UserLoginSerializer(data=request.data)
@@ -189,11 +188,14 @@ class EmergencyAlertChoicesView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
 class AlertListCreateView(generics.ListCreateAPIView):
     queryset = Alert.objects.all()
     serializer_class = AlertSerializer
 
     def perform_create(self, serializer):
+        user = self.request.user
         user_location_data = self.request.data.get("user_location", None)
 
         if user_location_data:
@@ -202,11 +204,12 @@ class AlertListCreateView(generics.ListCreateAPIView):
                 location_instance = location_serializer.save()
                 serializer.validated_data["location"] = location_instance
 
+        serializer.validated_data["user"] = user
         alert_instance = serializer.save()
         alert_description = alert_instance.description
-        # first_aid_response = serializer.get_first_aid_response(alert_description)
+        first_aid_response = serializer.get_first_aid_response(alert_description)
 
-        # alert_instance.first_aid_response = first_aid_response
+        alert_instance.first_aid_response = first_aid_response
         alert_instance.save()
 
         if self.request.data.get("broadcast_to_all", False):
@@ -226,7 +229,6 @@ class AlertListCreateView(generics.ListCreateAPIView):
                 send_notifications(user, message_title, message_body)
 
         return alert_instance
-
 
 class ChatbotAPIView(APIView):
     def post(self, request, *args, **kwargs):

@@ -32,7 +32,7 @@ class AlertSerializer(serializers.ModelSerializer):
             A string containing the first aid response in markdown format (if successful).
         """
 
-        model = genai.GenerativeModel('gemini-1.5-pro')
+        model = genai.GenerativeModel('gemini-1.0-pro')
         prompt = (
             f"Given the following emergency alert: {obj.description}, "
             "You are well-versed in first aid measures for emergencies in Cameroon. "
