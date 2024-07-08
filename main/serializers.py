@@ -16,8 +16,7 @@ def to_markdown(text):
     return markdown.markdown(textwrap.indent(text, '> ', predicate=lambda _: True))
 
 class AlertSerializer(serializers.ModelSerializer):
-    first_aid_response = serializers.SerializerMethodField()
-
+    
     class Meta:
         model = Alert
         fields = ["alert_type", "description", "location", "first_aid_response"]
