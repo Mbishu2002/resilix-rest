@@ -27,7 +27,7 @@ SECRET_KEY = "django-insecure-*ej+a@++ed=o#^jb$-%urpqus5xbgzd*gr80kka@az59g36*oj
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["resilix.onrender.com", "127.0.0.1"]
+ALLOWED_HOSTS = ["resilix.onrender.com","resilixapi.onrender.com","127.0.0.1"]
 
 
 # Application definition
