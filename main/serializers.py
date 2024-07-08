@@ -22,30 +22,7 @@ class AlertSerializer(serializers.ModelSerializer):
         model = Alert
         fields = ["alert_type", "description", "location", "first_aid_response"]
 
-    def get_first_aid_response(self, obj):
-        """Provides first aid guidance based on the alert description using a generative model.
-
-        Args:
-            obj: The Alert object.
-
-        Returns:
-            A string containing the first aid response in markdown format (if successful).
-        """
-
-        model = genai.GenerativeModel('gemini-1.0-pro')
-        prompt = (
-            f"Given the following emergency alert: {obj}, "
-            "You are well-versed in first aid measures for emergencies in Cameroon. "
-            "Provide immediate and clear first aid measures. Offer concise and effective first aid guidance."
-        )
-
-        try:
-            response = model.generate_content(prompt)
-            return response.text
-        except Exception as e:
-            print(f"Error generating response: {e}")
-            return "An error occurred while retrieving first aid guidance. Please call emergency services."
-
+    
 class DisasterFeedbackSerializer(serializers.ModelSerializer):
     class Meta:
         model = DisasterFeedback
